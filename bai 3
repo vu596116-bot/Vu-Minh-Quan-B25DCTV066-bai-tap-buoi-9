@@ -1,1 +1,171 @@
+import React, { useState, useEffect, useContext, createContext } from 'react';
 
+const ThemeContext = createContext();
+
+function useFetch(url) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error('Không thể tải dữ liệu từ API');
+        return res.json();
+      })
+      .then((data) => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [url]);
+
+  return { data, loading, error, setData };
+}
+
+function StudentManagerHooks() {
+  const { theme, toggleTheme } = useContext(ThemeContext);
+
+  // Thay URL bên dưới bằng endpoint MockAPI thực tế của bạn
+  const API_URL = 'https://651c50d93fb30e79309e398d.mockapi.io/students';
+  const { data: students, loading, error: fetchError, setData: setStudents } = useFetch(API_URL);
+
+  const [nameInput, setNameInput] = useState('');
+  const [gpaInput, setGpaInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState('');
+
+  const handleAddStudent = (e) => {
+    e.preventDefault();
+    const gpa = parseFloat(gpaInput);
+
+    if (!nameInput.trim()) {
+      setError('Tên không được để trống!');
+      return;
+    }
+    if (isNaN(gpa) || gpa < 0 || gpa > 4) {
+      setError('GPA phải từ 0 đến 4!');
+      return;
+    }
+
+    const newStudent = { name: nameInput.trim(), gpa: gpa };
+
+    fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newStudent),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setStudents((prev) => [...prev, data]);
+        setNameInput('');
+        setGpaInput('');
+        setError('');
+      })
+      .catch(() => setError('Lỗi khi thêm sinh viên lên API'));
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa sinh viên này?')) {
+      fetch(`${API_URL}/${id}`, { method: 'DELETE' })
+        .then(() => {
+          setStudents((prev) => prev.filter((s) => s.id !== id));
+        })
+        .catch(() => alert('Xóa thất bại!'));
+    }
+  };
+
+  const filteredStudents = students.filter((s) =>
+    s.name && s.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const themeStyles = {
+    backgroundColor: theme === 'light' ? '#ffffff' : '#1a1a1a',
+    color: theme === 'light' ? '#000000' : '#ffffff',
+    minHeight: '100vh',
+    padding: '20px',
+    fontFamily: 'Arial',
+  };
+
+  return (
+    <div style={themeStyles}>
+      <h2>Quản lý Sinh viên (Hooks & MockAPI)</h2>
+      <button onClick={toggleTheme} style={{ marginBottom: '15px' }}>
+        Chế độ: {theme === 'light' ? '🌙 Tối' : '☀️ Sáng'}
+      </button>
+
+      {fetchError && <p style={{ color: 'red' }}>Lỗi API: {fetchError}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      <form onSubmit={handleAddStudent} style={{ marginBottom: '15px' }}>
+        <input
+          type="text"
+          placeholder="Tên sinh viên"
+          value={nameInput}
+          onChange={(e) => setNameInput(e.target.value)}
+        />
+        <input
+          type="number"
+          step="0.1"
+          placeholder="GPA (0 - 4)"
+          value={gpaInput}
+          onChange={(e) => setGpaInput(e.target.value)}
+        />
+        <button type="submit">Thêm</button>
+      </form>
+
+      <div style={{ marginBottom: '15px' }}>
+        <input
+          type="text"
+          placeholder="Tìm kiếm theo tên..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {loading ? (
+        <p>Đang tải dữ liệu từ MockAPI...</p>
+      ) : (
+        <table border="1" cellPadding="10" style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Họ tên</th>
+              <th>GPA</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredStudents.map((s) => (
+              <tr key={s.id}>
+                <td>{s.id}</td>
+                <td>{s.name}</td>
+                <td>{s.gpa}</td>
+                <td>
+                  <button onClick={() => handleDelete(s.id)}>Xóa</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+export default function App() {
+  const [theme, setTheme] = useState('light');
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <StudentManagerHooks />
+    </ThemeContext.Provider>
+  );
+}
