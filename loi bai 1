@@ -1,1 +1,5 @@
+Quản lý ràng buộc ngữ cảnh this và cú pháp dài dòng: Trong Class Component, việc phải sử dụng this.state, this.setState, hay khai báo phương thức đòi hỏi nắm vững cách hoạt động của từ khóa this, dễ gây lỗi undefined cho lập trình viên mới.
 
+Cập nhật State phức tạp khi có nhiều trường dữ liệu form: Hàm handleInputChange phải dùng computed property name ([e.target.name]: e.target.value) thay vì tách bạch các state độc lập một cách đơn giản như khi dùng useState.
+
+Phân mảnh logic Lifecycle: Các tác vụ liên quan đến gọi API hoặc dọn dẹp tài nguyên phải chia cắt thành nhiều hàm khác nhau (componentDidMount, componentDidUpdate, componentWillUnmount), khó gom nhóm logic liên quan lại với nhau như useEffect.
