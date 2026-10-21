@@ -1,1 +1,131 @@
+import React, { Component } from 'react';
 
+class StudentManagerClass extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      students: [
+        { id: 1, name: 'Nguyễn Văn A', gpa: 3.5 },
+        { id: 2, name: 'Trần Thị B', gpa: 3.8 },
+      ],
+      nameInput: '',
+      gpaInput: '',
+      searchTerm: '',
+      error: '',
+    };
+  }
+
+  handleInputChange = (e) => {
+    this.setState({ [e.target.name]: e.target.value });
+  };
+
+  handleAddStudent = (e) => {
+    e.preventDefault();
+    const { nameInput, gpaInput, students } = this.state;
+    const gpa = parseFloat(gpaInput);
+
+    if (!nameInput.trim()) {
+      this.setState({ error: 'Tên sinh viên không được để trống!' });
+      return;
+    }
+    if (isNaN(gpa) || gpa < 0 || gpa > 4) {
+      this.setState({ error: 'GPA phải là số hợp lệ từ 0 đến 4!' });
+      return;
+    }
+
+    const newStudent = {
+      id: Date.now(),
+      name: nameInput.trim(),
+      gpa: gpa,
+    };
+
+    this.setState((prevState) => ({
+      students: [...prevState.students, newStudent],
+      nameInput: '',
+      gpaInput: '',
+      error: '',
+    }));
+  };
+
+  handleDelete = (id) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa sinh viên này không?')) {
+      this.setState((prevState) => ({
+        students: prevState.students.filter((student) => student.id !== id),
+      }));
+    }
+  };
+
+  render() {
+    const { students, nameInput, gpaInput, searchTerm, error } = this.state;
+
+    const filteredStudents = students.filter((student) =>
+      student.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+      <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+        <h2>Bài 1: Quản lý Sinh viên (Class Component)</h2>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+
+        <form onSubmit={this.handleAddStudent} style={{ marginBottom: '20px' }}>
+          <input
+            type="text"
+            name="nameInput"
+            placeholder="Nhập tên sinh viên"
+            value={nameInput}
+            onChange={this.handleInputChange}
+          />
+          <input
+            type="number"
+            step="0.1"
+            name="gpaInput"
+            placeholder="GPA (0 - 4)"
+            value={gpaInput}
+            onChange={this.handleInputChange}
+          />
+          <button type="submit">Thêm sinh viên</button>
+        </form>
+
+        <div style={{ marginBottom: '15px' }}>
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên..."
+            value={searchTerm}
+            onChange={(e) => this.setState({ searchTerm: e.target.value })}
+          />
+        </div>
+
+        <table border="1" cellPadding="10" style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Họ tên</th>
+              <th>GPA</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredStudents.length > 0 ? (
+              filteredStudents.map((student) => (
+                <tr key={student.id}> {/* Có key cho danh sách */}
+                  <td>{student.id}</td>
+                  <td>{student.name}</td>
+                  <td>{student.gpa}</td>
+                  <td>
+                    <button onClick={() => this.handleDelete(student.id)}>Xóa</button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" style={{ textAlign: 'center' }}>Không tìm thấy sinh viên phù hợp</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+}
+
+export default StudentManagerClass;
